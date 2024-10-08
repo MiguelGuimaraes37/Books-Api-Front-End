@@ -29,35 +29,39 @@ function getBookById(bookId) {
 }
 
 function editBookById() {
-    if(document.getElementById("idInput").value !== "" && validFields === true) {
-        $.ajax({
-            url: 'http://localhost:8080/restExercise/api/books/edit/' + document.getElementById("idInput").value,
-            method: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                id: document.getElementById("idInput").value,
-                title: document.getElementById("titleInput").value,
-                author: document.getElementById("authorInput").value,
-                isbn: document.getElementById("isbnInput").value,
-                publishedDate: document.getElementById("publishedDateInput").value,
-                price: document.getElementById("priceInput").value
-            }), 
-            success: function() {
-    
-                alert("BookId: " + document.getElementById("idInput").value + " has been updated!");
-    
-                location.href = location.href;
-    
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                alert('AJAX request failed:', textStatus, errorThrown);
-            }
-        });
+
+    if(document.getElementById("idInput").value != "") {
+        
+        if(validFields()) {
+            $.ajax({
+                url: 'http://localhost:8080/restExercise/api/books/edit/' + document.getElementById("idInput").value,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    id: document.getElementById("idInput").value,
+                    title: document.getElementById("titleInput").value,
+                    author: document.getElementById("authorInput").value,
+                    isbn: document.getElementById("isbnInput").value,
+                    publishedDate: document.getElementById("publishedDateInput").value,
+                    price: document.getElementById("priceInput").value
+                }), 
+                success: function() {
+        
+                    alert("BookId: " + document.getElementById("idInput").value + " has been updated!");
+        
+                    location.href = location.href;
+        
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('AJAX request failed:', textStatus, errorThrown);
+                }
+            });
+        }
+
     }
     else {
-        alert("You have to select a record in the table to edit or maybe invalid inputs!");
+        alert("Select a book!");
     }
-
 }
 
 function populateFields(data) {
