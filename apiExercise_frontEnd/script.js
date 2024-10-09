@@ -16,7 +16,7 @@ function dataRequest() {
 
 function getBookById(bookId) {
     $.ajax({
-        url: 'http://localhost:8080/restExercise/api/books/' + bookId,
+        url: 'http://localhost:8080/restExercise/api/books/id/' + bookId,
         method: 'GET',
         dataType: 'json',
         success: function(data) {
@@ -28,41 +28,99 @@ function getBookById(bookId) {
     });
 }
 
-function editBookById() {
+function createBook() {
 
-    if(document.getElementById("idInput").value != "") {
-        
-        if(validFields()) {
-            $.ajax({
-                url: 'http://localhost:8080/restExercise/api/books/edit/' + document.getElementById("idInput").value,
-                method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    id: document.getElementById("idInput").value,
-                    title: document.getElementById("titleInput").value,
-                    author: document.getElementById("authorInput").value,
-                    isbn: document.getElementById("isbnInput").value,
-                    publishedDate: document.getElementById("publishedDateInput").value,
-                    price: document.getElementById("priceInput").value
-                }), 
-                success: function() {
-        
-                    alert("BookId: " + document.getElementById("idInput").value + " has been updated!");
-        
-                    location.href = location.href;
-        
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    alert('AJAX request failed:', textStatus, errorThrown);
-                }
-            });
+    if(document.getElementById("idInput").value.length === 0) {
+
+        if(validFields() === true) {
+
+            fetch('http://localhost:8080/restExercise/api/books/isbn/' + document.getElementById("isbnInput").value)
+            .then(response => {
+            if (!response.ok) {
+                $.ajax({
+                    url: 'http://localhost:8080/restExercise/api/books/create',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        title: document.getElementById("titleInput").value,
+                        author: document.getElementById("authorInput").value,
+                        isbn: document.getElementById("isbnInput").value,
+                        publishedDate: document.getElementById("publishedDateInput").value,
+                        price: document.getElementById("priceInput").value
+                    }), 
+                        success: function() {
+            
+                        alert("Book: " + document.getElementById("titleInput").value + " has been created!");
+            
+                        location.href = location.href;
+            
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            alert('AJAX request failed:', textStatus, errorThrown);
+                        }
+                    });
+            } else {
+                alert("ISBN already in use!");
+            } 
+        })
         }
-
     }
     else {
-        alert("Select a book!");
+        alert("Clean first!")
     }
+    
 }
+
+function updateBookById() {
+
+    if(document.getElementById("idInput").value.length > 0) {
+        
+        if(validFields()) {
+
+            fetch('http://localhost:8080/restExercise/api/books/book/' + document.getElementById("isbnInput").value + '/' + document.getElementById("idInput").value)
+            .then(response => {
+            if (!response.ok) {
+                $.ajax({
+                    url: 'http://localhost:8080/restExercise/api/books/edit/' + document.getElementById("idInput").value,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        id: document.getElementById("idInput").value,
+                        title: document.getElementById("titleInput").value,
+                        author: document.getElementById("authorInput").value,
+                        isbn: document.getElementById("isbnInput").value,
+                        publishedDate: document.getElementById("publishedDateInput").value,
+                        price: document.getElementById("priceInput").value
+                    }), 
+                    success: function() {
+            
+                        alert("BookId: " + document.getElementById("idInput").value + " has been updated!");
+            
+                        location.href = location.href;
+            
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert('AJAX request failed:', textStatus, errorThrown);
+                    }
+                }).catch(error => {
+                    console.log("É o log " + error);
+
+                })
+            }
+            else {
+                alert("ISBN already in use!")
+            }
+
+            });
+
+            }
+            
+        }
+        else {
+            alert("Select a book!");
+        }
+    }
 
 function populateFields(data) {
     document.getElementById("idInput").value = data.id;
@@ -82,12 +140,16 @@ function clearInputs() {
     document.getElementById("idInput").value = "";
 }
 
-function cancelFunction() {
-    clearInputs();
-}
-
 function validFields() {
-    const regex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(\d{4})$/;
+
+    const regexDate = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(\d{4})$/;
+    const regexISBN = /^[0-9]{3}-[0-9]-[0-9]{2}-[0-9]{6}-[0-9]$/;
+    const isbnInputValue = document.getElementById("isbnInput").value;
+    const currentDate = new Date();
+    const partsOfDate = document.getElementById("publishedDateInput").value.split('-');
+    const reversedDateString = `${partsOfDate[2]}-${partsOfDate[1]}-${partsOfDate[0]}`; 
+    const inputDate = new Date(reversedDateString);
+
     
     if(document.getElementById("titleInput").value.length < 3) {
         alert("Title has to have at list 3 characters");
@@ -97,12 +159,20 @@ function validFields() {
         alert("Author has to have at list 3 characters");
         return false;
     }
-    else if(document.getElementById("isbnInput").value.length !== 17) {
-        alert("ISBN has to have 17 characters, with hifens ex: NNN-N-NN-NNNNNN-N");
+    else if(isbnInputValue.length !== 17 && !regexISBN.test(isbnInputValue)) {
+        alert("ISBN has to have 17 characters");
         return false;
     }
-    if (!regex.test(document.getElementById("publishedDateInput")) && document.getElementById("publishedDateInput").value.length !== 10) {
+    if(!regexISBN.test(isbnInputValue)) {
+        alert("Wrong ISBN, ex: NNN-N-NN-NNNNNN-N");
+        return false;
+    }
+    if (!regexDate.test(document.getElementById("publishedDateInput")) && document.getElementById("publishedDateInput").value.length !== 10) {
         alert("Invalid date, ex: DD-MM-YYYY")
+        return false;
+    }
+    if (inputDate > currentDate) {
+        alert("Date cannot be bigger than current date!");
         return false;
     }
     if (document.getElementById("priceInput").value <= 0 || document.getElementById("priceInput").value.length <= 0) {
@@ -111,38 +181,6 @@ function validFields() {
     }
 
     return true;
-}
-
-function createBook() {
-    $.ajax({
-        url: 'http://localhost:8080/restExercise/api/books/create',
-        method: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify({
-            title: document.getElementById("titleInput").value,
-            author: document.getElementById("authorInput").value,
-            isbn: document.getElementById("isbnInput").value,
-            publishedDate: document.getElementById("publishedDateInput").value,
-            price: document.getElementById("priceInput").value
-        }), 
-        success: function() {
-
-            alert("BookId: " + document.getElementById("titleInput").value + " has been created!");
-
-            location.href = location.href;
-
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            alert('AJAX request failed:', textStatus, errorThrown);
-        }
-    });
-}
-
-function createFunction() {
-    if(validFields() === true) {
-        createBook();
-    }
 }
 
 function populateTable(data) {
@@ -172,7 +210,7 @@ function populateTable(data) {
         const cellPublishedDate = document.createElement('td');
         cellPublishedDate.textContent = item.publishedDate;
         row.appendChild(cellPublishedDate);
-        console.error
+        
         const cellPrice = document.createElement('td');
         cellPrice.textContent = item.price;
         row.appendChild(cellPrice);
@@ -183,7 +221,7 @@ function populateTable(data) {
             getBookById(item.id);
         };
         editButton.className = "btn btn-warning"
-        editButton.textContent = "Edit";
+        editButton.textContent = "Select";
         cellEditButton.appendChild(editButton);
         row.appendChild(cellEditButton);
 
@@ -191,7 +229,7 @@ function populateTable(data) {
         const deleteButton = document.createElement('button');
         deleteButton.onclick = function() {
             $.ajax({
-                url: 'http://localhost:8080/restExercise/api/books/delete/' +item.id,
+                url: 'http://localhost:8080/restExercise/api/books/delete/' + item.id,
                 method: 'DELETE',
                 dataType: 'json',
             });

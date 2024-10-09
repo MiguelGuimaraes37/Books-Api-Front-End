@@ -1,0 +1,5 @@
+passar a funcao
+createBook
+para dentro
+do validBook
+tornar numa so funcao
